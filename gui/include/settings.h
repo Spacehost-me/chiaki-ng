@@ -521,6 +521,12 @@ class Settings : public QObject
 		uint GetDiscordProsperoMgrPollInterval() const;
 		void SetDiscordProsperoMgrPollInterval(uint seconds);
 
+		bool GetDiscordCoverUploadEnabled() const;
+		void SetDiscordCoverUploadEnabled(bool enabled);
+
+		QString GetDiscordImgurClientId() const;
+		void SetDiscordImgurClientId(const QString &client_id);
+
 		void DeleteProfile(QString profile);
 
 		QString GetPsnAccountId() const;

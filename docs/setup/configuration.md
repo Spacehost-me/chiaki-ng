@@ -401,6 +401,8 @@ The running game is read from the console itself while streaming. Cover art and 
 
     If your console does not report the running game (common with homebrew setups) you can enable `Detect the game via Prospero Manager`. `chiaki-ng` then polls the [Prospero Manager](https://github.com/notmaj0r/ProsperoMgr){target="_blank" rel="noopener"} web API on the console for the running title and additionally shows the game version and your total play time, and optionally the console's CPU / SoC temperature, fan speed and the Prospero Manager uptime. Leave the URL empty to use `http://<console address>:7070` of the console you are streaming from, or enter it manually (for example `http://192.168.1.248:7070`) and press `Test`.
 
+    Cover art is looked up in public title databases, because Discord loads images from the internet and cannot read an icon straight off a console on your network. Released games resolve automatically; anything the databases do not list (unreleased, homebrew, regional) falls back to the chiaki-ng logo. `Upload the console's icon to Imgur when no cover art is found` instead mirrors the console's own icon to Imgur and hands Discord that link, uploading each title once and caching the result. It is off by default and needs an Imgur Client ID from [api.imgur.com](https://api.imgur.com/oauth2/addclient){target="_blank" rel="noopener"}; note that the uploaded image is publicly reachable by anyone with the link.
+
 !!! Note "Flatpak"
 
     The Flatpak build has access to the Discord socket of native, Flatpak and Snap Discord installs. If Discord is installed in a different sandbox, grant `chiaki-ng` access to its `discord-ipc-0` socket (e.g. with Flatseal).

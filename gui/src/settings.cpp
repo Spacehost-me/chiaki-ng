@@ -1087,6 +1087,10 @@ void Settings::SetStreamMenuShortcut4(uint button) {
 #define CHIAKI_DISCORD_CLIENT_ID ""
 #endif
 
+#ifndef CHIAKI_IMGUR_CLIENT_ID
+#define CHIAKI_IMGUR_CLIENT_ID ""
+#endif
+
 bool Settings::GetDiscordPresenceEnabled() const
 {
 	return settings.value("settings/discord_presence_enabled", false).toBool();
@@ -1236,6 +1240,26 @@ uint Settings::GetDiscordProsperoMgrPollInterval() const
 void Settings::SetDiscordProsperoMgrPollInterval(uint seconds)
 {
 	settings.setValue("settings/discord_prospero_mgr_poll_interval", seconds);
+}
+
+bool Settings::GetDiscordCoverUploadEnabled() const
+{
+	return settings.value("settings/discord_cover_upload_enabled", false).toBool();
+}
+
+void Settings::SetDiscordCoverUploadEnabled(bool enabled)
+{
+	settings.setValue("settings/discord_cover_upload_enabled", enabled);
+}
+
+QString Settings::GetDiscordImgurClientId() const
+{
+	return settings.value("settings/discord_imgur_client_id", QString(CHIAKI_IMGUR_CLIENT_ID)).toString().trimmed();
+}
+
+void Settings::SetDiscordImgurClientId(const QString &client_id)
+{
+	settings.setValue("settings/discord_imgur_client_id", client_id.trimmed());
 }
 
 QString Settings::GetPsnAccountId() const

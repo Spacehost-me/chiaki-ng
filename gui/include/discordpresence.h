@@ -125,12 +125,23 @@ class DiscordGameInfoResolver : public QObject
 		bool Lookup(const QString &title_id, DiscordGameInfo &out) const;
 		void Resolve(const QString &title_id);
 
+		/**
+		 * Last resort for titles no public database knows (unreleased, homebrew,
+		 * regional): grab the icon off the console and mirror it to Imgur, since
+		 * Discord's image proxy cannot reach a console on the local network.
+		 * Opt-in; without it such titles keep the chiaki-ng logo.
+		 */
+		void SetCoverUpload(bool enabled, const QString &client_id);
+		void SetConsoleIconSource(const QString &base_url);
+
 	signals:
 		void Resolved(const QString &title_id);
 
 	private:
 		void ResolveFromPatchesDb(const QString &title_id);
 		void ResolveFromTmdb(const QString &title_id);
+		void ResolveFromConsole(const QString &title_id);
+		void UploadCover(const QString &title_id, const QByteArray &image);
 		void Finish(const QString &title_id, const DiscordGameInfo &info);
 		void LoadCache();
 		void SaveCache();
@@ -139,6 +150,9 @@ class DiscordGameInfoResolver : public QObject
 		QNetworkAccessManager *nam;
 		QHash<QString, DiscordGameInfo> cache;
 		QHash<QString, QDateTime> in_flight;
+		QString console_icon_base;
+		QString imgur_client_id;
+		bool upload_enabled = false;
 };
 
 class DiscordPresence : public QObject
@@ -227,6 +241,7 @@ class DiscordPresence : public QObject
 		QString ProsperoMgrUrl() const;
 		bool ProsperoMgrEnabled() const;
 		void UpdateProsperoMgrStatus();
+		void UpdateCoverSources();
 
 		void StartHostProbe();
 		void StopHostProbe();

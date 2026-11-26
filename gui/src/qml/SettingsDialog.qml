@@ -3594,13 +3594,61 @@ DialogView {
                                 text: qsTr("Show console temperature, fan speed and Prospero Manager uptime")
                                 enabled: Chiaki.settings.discordProsperoMgrEnabled
                                 checked: Chiaki.settings.discordShowConsoleStats
-                                lastInFocusChain: true
                                 onToggled: Chiaki.settings.discordShowConsoleStats = checked
                             }
 
                             Label {
                                 Layout.alignment: Qt.AlignRight
                                 text: qsTr("(Unchecked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Missing cover art:")
+                            }
+
+                            C.CheckBox {
+                                id: discordCoverUploadCheckbox
+                                text: qsTr("Upload the console's icon to Imgur when no cover art is found")
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled
+                                checked: Chiaki.settings.discordCoverUploadEnabled
+                                onToggled: Chiaki.settings.discordCoverUploadEnabled = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Unchecked)")
+                            }
+
+                            Label {
+                                Layout.columnSpan: 3
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.maximumWidth: 760
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignHCenter
+                                font.pixelSize: 12
+                                opacity: 0.7
+                                text: qsTr("Discord loads cover art from the internet, so it cannot read an icon straight off your console. Public title databases cover released games; for anything they do not list (unreleased, homebrew, regional) this uploads the console's icon to Imgur as a publicly reachable image and hands Discord that link. Each title is uploaded once and then cached. Leave it off to keep showing the chiaki-ng logo instead.")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Imgur Client ID:")
+                            }
+
+                            C.TextField {
+                                id: discordImgurClientId
+                                Layout.preferredWidth: 400
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled && Chiaki.settings.discordCoverUploadEnabled
+                                text: Chiaki.settings.discordImgurClientId
+                                placeholderText: qsTr("Required, register an application at api.imgur.com")
+                                lastInFocusChain: true
+                                onEditingFinished: Chiaki.settings.discordImgurClientId = text
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
                             }
                         }
                     }

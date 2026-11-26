@@ -494,10 +494,14 @@ void DiscordGameInfoResolver::ResolveFromPatchesDb(const QString &title_id)
 		else
 			qCInfo(chiakiGui) << "Discord: patches db lookup failed for" << title_id << reply->errorString();
 
-		if(info.valid || !isPs4TitleId(title_id))
+		// Sony's TMDB only serves PS4 titles, so PS5 ids go straight to the
+		// console fallback when the patches database does not know them.
+		if(info.valid)
 			Finish(title_id, info);
-		else
+		else if(isPs4TitleId(title_id))
 			ResolveFromTmdb(title_id);
+		else
+			ResolveFromConsole(title_id);
 	});
 }
 
@@ -546,6 +550,90 @@ void DiscordGameInfoResolver::ResolveFromTmdb(const QString &title_id)
 		}
 		else
 			qCInfo(chiakiGui) << "Discord: TMDB lookup failed for" << title_id << reply->errorString();
+		if(info.valid)
+			Finish(title_id, info);
+		else
+			ResolveFromConsole(title_id);
+	});
+}
+
+void DiscordGameInfoResolver::SetCoverUpload(bool enabled, const QString &client_id)
+{
+	upload_enabled = enabled;
+	imgur_client_id = client_id.trimmed();
+}
+
+void DiscordGameInfoResolver::SetConsoleIconSource(const QString &base_url)
+{
+	QString normalized = base_url.trimmed();
+	while(normalized.endsWith(QLatin1Char('/')))
+		normalized.chop(1);
+	console_icon_base = normalized;
+}
+
+void DiscordGameInfoResolver::ResolveFromConsole(const QString &title_id)
+{
+	if(!upload_enabled || console_icon_base.isEmpty() || imgur_client_id.isEmpty())
+	{
+		Finish(title_id, DiscordGameInfo());
+		return;
+	}
+	// Fetching and uploading an icon takes far longer than a database lookup,
+	// so restart the in-flight window at each step. Otherwise the next poll
+	// walks straight past the guard and uploads the same icon again.
+	in_flight.insert(title_id, QDateTime::currentDateTimeUtc());
+	QUrl url(console_icon_base + QStringLiteral("/api/titles/icon"));
+	QUrlQuery query;
+	query.addQueryItem(QStringLiteral("id"), title_id);
+	url.setQuery(query);
+	QNetworkRequest request(url);
+	request.setTransferTimeout(15000);
+	QNetworkReply *reply = nam->get(request);
+	connect(reply, &QNetworkReply::finished, this, [this, reply, title_id]() {
+		reply->deleteLater();
+		const QByteArray image = reply->error() == QNetworkReply::NoError ? reply->readAll() : QByteArray();
+		if(image.isEmpty())
+		{
+			qCInfo(chiakiGui) << "Discord: no console icon for" << title_id << reply->errorString();
+			Finish(title_id, DiscordGameInfo());
+			return;
+		}
+		UploadCover(title_id, image);
+	});
+}
+
+void DiscordGameInfoResolver::UploadCover(const QString &title_id, const QByteArray &image)
+{
+	in_flight.insert(title_id, QDateTime::currentDateTimeUtc());
+	QNetworkRequest request(QUrl(QStringLiteral("https://api.imgur.com/3/image")));
+	request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
+	request.setRawHeader("Authorization", QStringLiteral("Client-ID %1").arg(imgur_client_id).toUtf8());
+	request.setTransferTimeout(30000);
+	QUrlQuery form;
+	form.addQueryItem(QStringLiteral("type"), QStringLiteral("base64"));
+	form.addQueryItem(QStringLiteral("image"), QString::fromLatin1(image.toBase64()));
+	QNetworkReply *reply = nam->post(request, form.toString(QUrl::FullyEncoded).toUtf8());
+	connect(reply, &QNetworkReply::finished, this, [this, reply, title_id]() {
+		reply->deleteLater();
+		DiscordGameInfo info;
+		info.title_id = title_id;
+		if(reply->error() == QNetworkReply::NoError)
+		{
+			const QJsonObject root = QJsonDocument::fromJson(reply->readAll()).object();
+			if(root.value(QStringLiteral("success")).toBool())
+			{
+				info.icon_url = root.value(QStringLiteral("data")).toObject().value(QStringLiteral("link")).toString().trimmed();
+				// Discord's image proxy only fetches https URLs
+				if(info.icon_url.startsWith(QLatin1String("http://")))
+					info.icon_url.replace(0, 7, QLatin1String("https://"));
+				// The name still comes from the console, this only supplies art
+				info.valid = !info.icon_url.isEmpty();
+			}
+		}
+		if(!info.valid)
+			qCInfo(chiakiGui) << "Discord: cover upload failed for" << title_id << reply->errorString();
+		else
+			qCInfo(chiakiGui) << "Discord: uploaded cover for" << title_id;
 		Finish(title_id, info);
 	});
 }
@@ -1186,6 +1274,7 @@ void DiscordPresence::SettingsChanged()
 			StopProsperoMgrPolling();
 	}
 	UpdateProsperoMgrStatus();
+	UpdateCoverSources();
 
 	if(!enabled)
 	{
@@ -1344,6 +1433,9 @@ void DiscordPresence::StartProsperoMgrPolling()
 	}
 	const QString url = ProsperoMgrUrl();
 	prospero_mgr->SetBaseUrl(url);
+	// The console address is only known once a stream starts, so the icon
+	// source has to be refreshed here rather than only on a settings change.
+	UpdateCoverSources();
 	if(url.isEmpty())
 	{
 		StopProsperoMgrPolling();
@@ -1380,6 +1472,12 @@ void DiscordPresence::ProsperoMgrActivityUpdated()
 void DiscordPresence::ProsperoMgrReachabilityChanged(bool, const QString &)
 {
 	UpdateProsperoMgrStatus();
+}
+
+void DiscordPresence::UpdateCoverSources()
+{
+	resolver->SetCoverUpload(settings->GetDiscordCoverUploadEnabled(), settings->GetDiscordImgurClientId());
+	resolver->SetConsoleIconSource(ProsperoMgrEnabled() ? ProsperoMgrUrl() : QString());
 }
 
 void DiscordPresence::UpdateProsperoMgrStatus()

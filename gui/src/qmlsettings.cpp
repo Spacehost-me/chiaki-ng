@@ -940,6 +940,7 @@ QML_DISCORD_BOOL_SETTING(discordShowPlaytime, DiscordShowPlaytime)
 QML_DISCORD_BOOL_SETTING(discordShowConsoleStats, DiscordShowConsoleStats)
 QML_DISCORD_BOOL_SETTING(discordShowButtons, DiscordShowButtons)
 QML_DISCORD_BOOL_SETTING(discordProsperoMgrEnabled, DiscordProsperoMgrEnabled)
+QML_DISCORD_BOOL_SETTING(discordCoverUploadEnabled, DiscordCoverUploadEnabled)
 
 #undef QML_DISCORD_BOOL_SETTING
 
@@ -973,6 +974,17 @@ uint QmlSettings::discordProsperoMgrPollInterval() const
 void QmlSettings::setDiscordProsperoMgrPollInterval(uint seconds)
 {
     settings->SetDiscordProsperoMgrPollInterval(seconds);
+    emit discordSettingsChanged();
+}
+
+QString QmlSettings::discordImgurClientId() const
+{
+    return settings->GetDiscordImgurClientId();
+}
+
+void QmlSettings::setDiscordImgurClientId(const QString &client_id)
+{
+    settings->SetDiscordImgurClientId(client_id);
     emit discordSettingsChanged();
 }
 
