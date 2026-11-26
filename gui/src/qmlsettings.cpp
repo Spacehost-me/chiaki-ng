@@ -917,6 +917,65 @@ void QmlSettings::setStreamMenuShortcut4(uint button) {
     emit streamMenuShortcut4Changed();
 }
 
+#define QML_DISCORD_BOOL_SETTING(Name, Suffix) \
+bool QmlSettings::Name() const \
+{ \
+    return settings->Get##Suffix(); \
+} \
+void QmlSettings::set##Suffix(bool enabled) \
+{ \
+    settings->Set##Suffix(enabled); \
+    emit discordSettingsChanged(); \
+}
+
+QML_DISCORD_BOOL_SETTING(discordPresenceEnabled, DiscordPresenceEnabled)
+QML_DISCORD_BOOL_SETTING(discordShowIdle, DiscordShowIdle)
+QML_DISCORD_BOOL_SETTING(discordShowGame, DiscordShowGame)
+QML_DISCORD_BOOL_SETTING(discordShowCoverArt, DiscordShowCoverArt)
+QML_DISCORD_BOOL_SETTING(discordGameAsActivityName, DiscordGameAsActivityName)
+QML_DISCORD_BOOL_SETTING(discordShowConsoleName, DiscordShowConsoleName)
+QML_DISCORD_BOOL_SETTING(discordShowStreamInfo, DiscordShowStreamInfo)
+QML_DISCORD_BOOL_SETTING(discordShowElapsedTime, DiscordShowElapsedTime)
+QML_DISCORD_BOOL_SETTING(discordShowPlaytime, DiscordShowPlaytime)
+QML_DISCORD_BOOL_SETTING(discordShowConsoleStats, DiscordShowConsoleStats)
+QML_DISCORD_BOOL_SETTING(discordShowButtons, DiscordShowButtons)
+QML_DISCORD_BOOL_SETTING(discordProsperoMgrEnabled, DiscordProsperoMgrEnabled)
+
+#undef QML_DISCORD_BOOL_SETTING
+
+QString QmlSettings::discordClientId() const
+{
+    return settings->GetDiscordClientId();
+}
+
+void QmlSettings::setDiscordClientId(const QString &client_id)
+{
+    settings->SetDiscordClientId(client_id);
+    emit discordSettingsChanged();
+}
+
+QString QmlSettings::discordProsperoMgrUrl() const
+{
+    return settings->GetDiscordProsperoMgrUrl();
+}
+
+void QmlSettings::setDiscordProsperoMgrUrl(const QString &url)
+{
+    settings->SetDiscordProsperoMgrUrl(url);
+    emit discordSettingsChanged();
+}
+
+uint QmlSettings::discordProsperoMgrPollInterval() const
+{
+    return settings->GetDiscordProsperoMgrPollInterval();
+}
+
+void QmlSettings::setDiscordProsperoMgrPollInterval(uint seconds)
+{
+    settings->SetDiscordProsperoMgrPollInterval(seconds);
+    emit discordSettingsChanged();
+}
+
 QString QmlSettings::currentProfile() const
 {
     return settings->GetCurrentProfile();
@@ -1960,6 +2019,7 @@ void QmlSettings::refreshAllKeys()
     emit streamMenuShortcut2Changed();
     emit streamMenuShortcut3Changed();
     emit streamMenuShortcut4Changed();
+    emit discordSettingsChanged();
     emit controllerMappingChanged();
     emit packetLossReportedMaxChanged();
     emit currentProfileChanged();

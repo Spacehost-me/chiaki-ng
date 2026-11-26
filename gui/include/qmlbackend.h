@@ -5,6 +5,7 @@
 #include "qmlmainwindow.h"
 #include "qmlcontroller.h"
 #include "qmlsettings.h"
+#include "discordpresence.h"
 
 #include <QObject>
 #include <QMutex>
@@ -80,6 +81,7 @@ class QmlBackend : public QObject
     Q_OBJECT
     Q_PROPERTY(QmlMainWindow* window READ qmlWindow CONSTANT)
     Q_PROPERTY(QmlSettings* settings READ qmlSettings CONSTANT)
+    Q_PROPERTY(DiscordPresence* discordPresence READ discordPresence CONSTANT)
     Q_PROPERTY(StreamSession* session READ qmlSession NOTIFY sessionChanged)
     Q_PROPERTY(QList<QmlController*> controllers READ qmlControllers NOTIFY controllersChanged)
     Q_PROPERTY(bool discoveryEnabled READ discoveryEnabled WRITE setDiscoveryEnabled NOTIFY discoveryEnabledChanged)
@@ -116,6 +118,7 @@ public:
 
     QmlMainWindow *qmlWindow() const;
     QmlSettings *qmlSettings() const;
+    DiscordPresence *discordPresence() const { return discord_presence; }
     StreamSession *qmlSession() const;
     QList<QmlController*> qmlControllers() const;
 
@@ -285,6 +288,7 @@ private:
 
     Settings *settings = {};
     QmlSettings *settings_qml = {};
+    DiscordPresence *discord_presence = {};
     QmlMainWindow *window = {};
     StreamSession *session = {};
     QThread *frame_thread = {};

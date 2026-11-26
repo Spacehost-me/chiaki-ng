@@ -7,7 +7,7 @@ if(APPLE)
 	enable_language(OBJCXX)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Concurrent Svg Qml Quick Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Concurrent Svg Qml Quick Widgets)
 if(Qt6_VERSION VERSION_GREATER_EQUAL "6.10.0")
 	find_package(Qt6 REQUIRED COMPONENTS GuiPrivate)
 endif()
@@ -41,6 +41,8 @@ set(SOURCE_FILES
 	src/psntoken.cpp
 	include/jsonrequester.h
 	src/jsonrequester.cpp
+	include/discordpresence.h
+	src/discordpresence.cpp
 	src/qml/qml.qrc
 	include/qmlmainwindow.h
 	src/qmlmainwindow.cpp
@@ -104,7 +106,11 @@ if(CHIAKI_ENABLE_CLI)
 	target_link_libraries(chiaki chiaki-cli-lib)
 endif()
 
-target_link_libraries(chiaki Qt::Core Qt::Gui Qt::GuiPrivate Qt::Concurrent Qt::Svg Qt::Qml Qt::Quick Qt::Widgets)
+target_link_libraries(chiaki Qt::Core Qt::Gui Qt::GuiPrivate Qt::Network Qt::Concurrent Qt::Svg Qt::Qml Qt::Quick Qt::Widgets)
+set(CHIAKI_DISCORD_CLIENT_ID "" CACHE STRING "Default Discord Application ID used for Rich Presence (users can override it in Settings)")
+if(CHIAKI_DISCORD_CLIENT_ID)
+	target_compile_definitions(chiaki PRIVATE CHIAKI_DISCORD_CLIENT_ID="${CHIAKI_DISCORD_CLIENT_ID}")
+endif()
 if (${Qt6DBus_FOUND} AND NOT WIN32)
 	target_link_libraries(chiaki Qt::DBus)
 if (NOT APPLE)

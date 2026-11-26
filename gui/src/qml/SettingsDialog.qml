@@ -30,11 +30,15 @@ DialogView {
         return false;
     }
     function flickVisibilityTarget(flick, item) {
+        // Scroll to the focused control itself. Walking up to whichever ancestor
+        // happens to sit directly under the content item makes a tab with grouped
+        // controls (Discord) jump to the top of the whole group every time a
+        // control inside it is focused, because that group starts above the view.
+        if (item && item.height > 0)
+            return item;
         let current = item;
         while (current && current !== flick && current !== flick.contentItem) {
-            if (current.parent === flick.contentItem)
-                return current;
-            if (current.parent && current.parent.parent === flick.contentItem)
+            if (current.height > 0)
                 return current;
             current = current.parent;
         }
@@ -49,7 +53,7 @@ DialogView {
         if (top < flick.contentY)
             flick.contentY = top;
         else if (bottom > flick.contentY + flick.height)
-            flick.contentY = bottom - flick.height;
+            flick.contentY = Math.min(top, bottom - flick.height);
     }
     function itemIsInsideNestedScrollable(flick, item) {
         let current = item ? item.parent : null;
@@ -74,9 +78,15 @@ DialogView {
         const window = dialog.Window.window;
         if (!flick || !window || !window.activeFocusItem)
             return;
-        const target = itemIsInsideNestedScrollable(flick, window.activeFocusItem)
-            ? nestedScrollableTarget(flick, window.activeFocusItem)
-            : window.activeFocusItem;
+        const focused = window.activeFocusItem;
+        // Following the focus is for keyboard and controller navigation. A click
+        // already landed on the control the user aimed at, so scrolling in
+        // response only drags the view out from under the pointer.
+        if (focused.focusReason === Qt.MouseFocusReason)
+            return;
+        const target = itemIsInsideNestedScrollable(flick, focused)
+            ? nestedScrollableTarget(flick, focused)
+            : focused;
         ensureItemVisibleInFlick(flick, target);
     }
     function scrollFlickKeepingItemVisible(flick, item, delta) {
@@ -99,6 +109,7 @@ DialogView {
         case 6: item = controllerMappingChange; break;
         case 7: item = firstRemoteFocusableItem(); break;
         case 8: item = profile; break;
+        case 9: item = discordEnabledCheckbox; break;
         }
         if (item)
             item.forceActiveFocus(Qt.TabFocusReason);
@@ -114,6 +125,7 @@ DialogView {
         case 6: return controllersFlick;
         case 7: return remoteFlick;
         case 8: return configFlick;
+        case 9: return discordFlick;
         default: return null;
         }
     }
@@ -416,6 +428,36 @@ DialogView {
                     sourceSize: Qt.size(width, height)
                     source: "qrc:/icons/r1.svg"
                     visible: bar.currentIndex == 7
+                }
+                Image {
+                    anchors {
+                        left: config.right
+                        verticalCenter: parent.verticalCenter
+                        leftMargin: -15
+                    }
+                    width: 28
+                    height: 28
+                    sourceSize: Qt.size(width, height)
+                    source: "qrc:/icons/l1.svg"
+                    visible: bar.currentIndex == 9
+                }
+            }
+
+            TabButton {
+                text: qsTr("Discord")
+                id: discord
+                focusPolicy: Qt.NoFocus
+                Image {
+                    anchors {
+                        right: discord.left
+                        verticalCenter: parent.verticalCenter
+                        rightMargin: -15
+                    }
+                    width: 28
+                    height: 28
+                    sourceSize: Qt.size(width, height)
+                    source: "qrc:/icons/r1.svg"
+                    visible: bar.currentIndex == 8
                 }
             }
         }
@@ -3068,6 +3110,498 @@ DialogView {
                             checked: Chiaki.settings.logVerbose
                             lastInFocusChain: true
                             onToggled: Chiaki.settings.logVerbose = checked
+                        }
+                    }
+                }
+            }
+
+            Item {
+                // Discord Rich Presence
+                Flickable {
+                    id: discordFlick
+                    anchors {
+                        fill: parent
+                        topMargin: 20
+                        bottomMargin: 20
+                    }
+                    clip: true
+                    contentWidth: Math.max(width, discordLayout.width)
+                    contentHeight: discordLayout.y + discordLayout.height
+                    flickableDirection: Flickable.AutoFlickIfNeeded
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AlwaysOn
+                        visible: discordFlick.contentHeight > discordFlick.height
+                    }
+                    ColumnLayout {
+                        id: discordLayout
+                        anchors {
+                            top: parent.top
+                            horizontalCenter: parent.horizontalCenter
+                        }
+                        spacing: 16
+
+                        // Live preview of what Discord will show
+                        Rectangle {
+                            id: discordPreviewCard
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: 520
+                            implicitHeight: discordPreviewRow.implicitHeight + 32
+                            radius: 8
+                            color: "#111214"
+                            border.color: "#2b2d31"
+                            border.width: 1
+                            opacity: Chiaki.settings.discordPresenceEnabled ? 1.0 : 0.5
+
+                            RowLayout {
+                                id: discordPreviewRow
+                                anchors {
+                                    fill: parent
+                                    margins: 16
+                                }
+                                spacing: 16
+
+                                Item {
+                                    Layout.preferredWidth: 96
+                                    Layout.preferredHeight: 96
+                                    Layout.alignment: Qt.AlignTop
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: 8
+                                        color: "#1e1f22"
+                                    }
+
+                                    Image {
+                                        id: discordLargeImage
+                                        anchors.fill: parent
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        source: Chiaki.discordPresence.previewLargeImage
+                                        visible: status === Image.Ready
+                                    }
+
+                                    Rectangle {
+                                        anchors {
+                                            right: parent.right
+                                            bottom: parent.bottom
+                                            rightMargin: -6
+                                            bottomMargin: -6
+                                        }
+                                        width: 36
+                                        height: 36
+                                        radius: 18
+                                        color: "#111214"
+                                        visible: Chiaki.discordPresence.previewSmallImage !== ""
+
+                                        Image {
+                                            anchors.centerIn: parent
+                                            width: 28
+                                            height: 28
+                                            fillMode: Image.PreserveAspectFit
+                                            asynchronous: true
+                                            source: Chiaki.discordPresence.previewSmallImage
+                                        }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignTop
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: "#b5bac1"
+                                        text: {
+                                            if (!Chiaki.settings.discordPresenceEnabled)
+                                                return qsTr("RICH PRESENCE DISABLED");
+                                            if (!Chiaki.discordPresence.previewDetails)
+                                                return qsTr("NOTHING SHOWN RIGHT NOW");
+                                            return qsTr("PLAYING A GAME");
+                                        }
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        font.bold: true
+                                        color: "#f2f3f5"
+                                        visible: text !== ""
+                                        text: Chiaki.discordPresence.previewName ? Chiaki.discordPresence.previewName : (Chiaki.discordPresence.previewDetails ? qsTr("chiaki-ng") : "")
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        color: "#dbdee1"
+                                        visible: text !== ""
+                                        text: Chiaki.discordPresence.previewDetails
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        color: "#dbdee1"
+                                        visible: text !== ""
+                                        text: Chiaki.discordPresence.previewState
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                        font.pixelSize: 12
+                                        color: "#949ba4"
+                                        visible: text !== ""
+                                        text: Chiaki.discordPresence.previewLargeText
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: 4
+                                        elide: Text.ElideRight
+                                        font.pixelSize: 12
+                                        color: Chiaki.discordPresence.connected ? "#23a55a" : "#f0b232"
+                                        text: Chiaki.discordPresence.status
+                                    }
+                                }
+                            }
+                        }
+
+                        GridLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            columns: 3
+                            rowSpacing: 5
+                            columnSpacing: 20
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Discord Rich Presence:")
+                            }
+
+                            C.CheckBox {
+                                id: discordEnabledCheckbox
+                                firstInFocusChain: true
+                                text: qsTr("Show what you are playing on your Discord profile")
+                                checked: Chiaki.settings.discordPresenceEnabled
+                                onToggled: Chiaki.settings.discordPresenceEnabled = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Unchecked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Discord Application ID:")
+                            }
+
+                            C.TextField {
+                                id: discordClientId
+                                Layout.preferredWidth: 400
+                                text: Chiaki.settings.discordClientId
+                                placeholderText: qsTr("Paste the Application ID from the Discord Developer Portal")
+                                validator: RegularExpressionValidator { regularExpression: /[0-9]{0,32}/ }
+                                Material.accent: text && !validate() ? Material.Red : undefined
+                                onEditingFinished: Chiaki.settings.discordClientId = validate() ? text : ""
+                                function validate() {
+                                    return text.length === 0 || /^[0-9]{15,25}$/.test(text);
+                                }
+                            }
+
+                            C.Button {
+                                text: qsTr("Create App")
+                                onClicked: Qt.openUrlExternally("https://discord.com/developers/applications")
+                                Material.roundedScale: Material.SmallScale
+                            }
+
+                            Label {
+                                Layout.columnSpan: 3
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.maximumWidth: 760
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignHCenter
+                                font.pixelSize: 12
+                                opacity: 0.7
+                                text: qsTr("Create a free application in the Discord Developer Portal (its name is what Discord shows after \"Playing\" when the game name is not used), copy its Application ID here and keep the Discord desktop app running. No bot, assets or OAuth are needed: cover art is loaded from public title databases.")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Connection:")
+                            }
+
+                            C.Button {
+                                id: discordReconnect
+                                text: qsTr("Reconnect to Discord")
+                                enabled: Chiaki.settings.discordPresenceEnabled
+                                onClicked: Chiaki.discordPresence.reconnect()
+                                Material.roundedScale: Material.SmallScale
+                            }
+
+                            Label {
+                                text: Chiaki.discordPresence.discordUser ? qsTr("Logged in as %1").arg(Chiaki.discordPresence.discordUser) : ""
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Idle:")
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show presence while in the launcher (not streaming)")
+                                checked: Chiaki.settings.discordShowIdle
+                                onToggled: Chiaki.settings.discordShowIdle = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Game:")
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show the game running on the console")
+                                checked: Chiaki.settings.discordShowGame
+                                onToggled: Chiaki.settings.discordShowGame = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Use the game as the activity name (\"Playing <game>\")")
+                                enabled: Chiaki.settings.discordShowGame
+                                checked: Chiaki.settings.discordGameAsActivityName
+                                onToggled: Chiaki.settings.discordGameAsActivityName = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show cover art of the game")
+                                enabled: Chiaki.settings.discordShowGame
+                                checked: Chiaki.settings.discordShowCoverArt
+                                onToggled: Chiaki.settings.discordShowCoverArt = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Stream:")
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show the console name (instead of just PS5 / PS4)")
+                                checked: Chiaki.settings.discordShowConsoleName
+                                onToggled: Chiaki.settings.discordShowConsoleName = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show resolution, frame rate and codec")
+                                checked: Chiaki.settings.discordShowStreamInfo
+                                onToggled: Chiaki.settings.discordShowStreamInfo = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show elapsed streaming time")
+                                checked: Chiaki.settings.discordShowElapsedTime
+                                onToggled: Chiaki.settings.discordShowElapsedTime = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show a \"Get chiaki-ng\" button")
+                                checked: Chiaki.settings.discordShowButtons
+                                onToggled: Chiaki.settings.discordShowButtons = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Prospero Manager:")
+                            }
+
+                            C.CheckBox {
+                                id: discordProsperoMgrCheckbox
+                                text: qsTr("Detect the game via Prospero Manager (jailbroken consoles)")
+                                checked: Chiaki.settings.discordProsperoMgrEnabled
+                                onToggled: Chiaki.settings.discordProsperoMgrEnabled = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Unchecked)")
+                            }
+
+                            Label {
+                                Layout.columnSpan: 3
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.maximumWidth: 760
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignHCenter
+                                font.pixelSize: 12
+                                opacity: 0.7
+                                text: qsTr("Used as a fallback when the console does not report the running game, and to add play time, game version and temperatures. Leave the URL empty to use http://<console address>:7070 of the console you are streaming from.")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Prospero Manager URL:")
+                            }
+
+                            C.TextField {
+                                id: discordProsperoMgrUrl
+                                Layout.preferredWidth: 400
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled
+                                text: Chiaki.settings.discordProsperoMgrUrl
+                                placeholderText: qsTr("http://192.168.1.2:7070 (empty = console address)")
+                                onEditingFinished: Chiaki.settings.discordProsperoMgrUrl = text
+                            }
+
+                            C.Button {
+                                text: qsTr("Test")
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled
+                                onClicked: Chiaki.discordPresence.testProsperoMgr()
+                                Material.roundedScale: Material.SmallScale
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Prospero Manager Status:")
+                            }
+
+                            Label {
+                                Layout.columnSpan: 2
+                                Layout.preferredWidth: 560
+                                elide: Text.ElideRight
+                                text: Chiaki.discordPresence.prosperoMgrStatus
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("Poll Interval:")
+                            }
+
+                            C.Slider {
+                                id: discordProsperoMgrPollInterval
+                                Layout.preferredWidth: 250
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled
+                                from: 3
+                                to: 120
+                                stepSize: 1
+                                value: Chiaki.settings.discordProsperoMgrPollInterval
+                                onMoved: Chiaki.settings.discordProsperoMgrPollInterval = value
+
+                                Label {
+                                    anchors {
+                                        left: parent.right
+                                        verticalCenter: parent.verticalCenter
+                                        leftMargin: 10
+                                    }
+                                    text: qsTr("%1 seconds").arg(parent.value)
+                                }
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                Layout.leftMargin: 100
+                                text: qsTr("(10)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show total play time of the game")
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled
+                                checked: Chiaki.settings.discordShowPlaytime
+                                onToggled: Chiaki.settings.discordShowPlaytime = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Checked)")
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: ""
+                            }
+
+                            C.CheckBox {
+                                text: qsTr("Show console temperature, fan speed and Prospero Manager uptime")
+                                enabled: Chiaki.settings.discordProsperoMgrEnabled
+                                checked: Chiaki.settings.discordShowConsoleStats
+                                lastInFocusChain: true
+                                onToggled: Chiaki.settings.discordShowConsoleStats = checked
+                            }
+
+                            Label {
+                                Layout.alignment: Qt.AlignRight
+                                text: qsTr("(Unchecked)")
+                            }
                         }
                     }
                 }

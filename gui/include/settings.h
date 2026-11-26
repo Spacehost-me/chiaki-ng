@@ -476,6 +476,51 @@ class Settings : public QObject
 		uint GetStreamMenuShortcut4() const;
 		void SetStreamMenuShortcut4(uint button);
 
+		bool GetDiscordPresenceEnabled() const;
+		void SetDiscordPresenceEnabled(bool enabled);
+
+		QString GetDiscordClientId() const;
+		void SetDiscordClientId(const QString &client_id);
+
+		bool GetDiscordShowIdle() const;
+		void SetDiscordShowIdle(bool enabled);
+
+		bool GetDiscordShowGame() const;
+		void SetDiscordShowGame(bool enabled);
+
+		bool GetDiscordShowCoverArt() const;
+		void SetDiscordShowCoverArt(bool enabled);
+
+		bool GetDiscordGameAsActivityName() const;
+		void SetDiscordGameAsActivityName(bool enabled);
+
+		bool GetDiscordShowConsoleName() const;
+		void SetDiscordShowConsoleName(bool enabled);
+
+		bool GetDiscordShowStreamInfo() const;
+		void SetDiscordShowStreamInfo(bool enabled);
+
+		bool GetDiscordShowElapsedTime() const;
+		void SetDiscordShowElapsedTime(bool enabled);
+
+		bool GetDiscordShowPlaytime() const;
+		void SetDiscordShowPlaytime(bool enabled);
+
+		bool GetDiscordShowConsoleStats() const;
+		void SetDiscordShowConsoleStats(bool enabled);
+
+		bool GetDiscordShowButtons() const;
+		void SetDiscordShowButtons(bool enabled);
+
+		bool GetDiscordProsperoMgrEnabled() const;
+		void SetDiscordProsperoMgrEnabled(bool enabled);
+
+		QString GetDiscordProsperoMgrUrl() const;
+		void SetDiscordProsperoMgrUrl(const QString &url);
+
+		uint GetDiscordProsperoMgrPollInterval() const;
+		void SetDiscordProsperoMgrPollInterval(uint seconds);
+
 		void DeleteProfile(QString profile);
 
 		QString GetPsnAccountId() const;

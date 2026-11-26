@@ -387,6 +387,24 @@ You can switch between profiles in chiaki-ng. If, for example, you have 2 users 
 
 To launch directly into a particular profile (instead of the last selected one) you can use the `--profile` option. This will automatically be filled in when creating a Steam shortcut using the given profile via the `Create Steam Shortcut` button. You can also manually include this in your options by adding `--profile=profile_name` to the appropriate place for your desktop shortcut (usually after the path to chiaki-ng) or in Steam's case to the end of the `Launch Options` section.
 
+### Discord Rich Presence
+
+`chiaki-ng` can show what you are playing on your Discord profile: the game name and its cover art, the console you stream from, the stream quality (resolution, frame rate and codec), how long you have been streaming and a "Get chiaki-ng" button. It talks to the Discord desktop app directly (no bot, login or extra software) and is configured in `Settings (Gear icon) -> Discord`.
+
+1. Create a free application at the [Discord Developer Portal](https://discord.com/developers/applications){target="_blank" rel="noopener"} (`New Application`). Its name is what Discord shows after "Playing" whenever the game name is not used, so something like `PlayStation 5` or `chiaki-ng` works well. No assets, bot or OAuth setup is needed.
+2. Copy the `Application ID` into `Settings -> Discord -> Discord Application ID` and enable `Discord Rich Presence`. The preview card at the top of the tab shows exactly what will be published, and the status line shows whether `chiaki-ng` is connected to Discord.
+3. Choose what to share. Everything can be toggled individually: presence while idle in the launcher, the running game, using the game as the activity name ("Playing Ghostwire: Tokyo"), cover art, console name, resolution / frame rate / codec, elapsed time and the button.
+
+The running game is read from the console itself while streaming. Cover art and clean game names are resolved from public title databases ([prosperopatches.com](https://prosperopatches.com){target="_blank" rel="noopener"} for PS5, [orbispatches.com](https://orbispatches.com){target="_blank" rel="noopener"} and Sony's title metadata service for PS4) and cached locally.
+
+!!! Tip "Jailbroken consoles: Prospero Manager"
+
+    If your console does not report the running game (common with homebrew setups) you can enable `Detect the game via Prospero Manager`. `chiaki-ng` then polls the [Prospero Manager](https://github.com/notmaj0r/ProsperoMgr){target="_blank" rel="noopener"} web API on the console for the running title and additionally shows the game version and your total play time, and optionally the console's CPU / SoC temperature, fan speed and the Prospero Manager uptime. Leave the URL empty to use `http://<console address>:7070` of the console you are streaming from, or enter it manually (for example `http://192.168.1.248:7070`) and press `Test`.
+
+!!! Note "Flatpak"
+
+    The Flatpak build has access to the Discord socket of native, Flatpak and Snap Discord installs. If Discord is installed in a different sandbox, grant `chiaki-ng` access to its `discord-ipc-0` socket (e.g. with Flatseal).
+
 ## Performance of Chiaki/`chiaki-ng`
 
 ### My Experience

@@ -295,6 +295,10 @@ QmlBackend::QmlBackend(Settings *settings, QmlMainWindow *window)
     qmlRegisterUncreatableType<QmlMainWindow>(uri, 1, 0, "ChiakiWindow", {});
     qmlRegisterUncreatableType<QmlSettings>(uri, 1, 0, "ChiakiSettings", {});
     qmlRegisterUncreatableType<StreamSession>(uri, 1, 0, "ChiakiSession", {});
+    qmlRegisterUncreatableType<DiscordPresence>(uri, 1, 0, "ChiakiDiscordPresence", {});
+
+    discord_presence = new DiscordPresence(settings, this);
+    connect(settings_qml, &QmlSettings::discordSettingsChanged, discord_presence, &DiscordPresence::SettingsChanged);
 
     QObject *frame_obj = new QObject();
     frame_thread = new QThread(frame_obj);
@@ -639,6 +643,7 @@ void QmlBackend::profileChanged()
     connect(settings, &Settings::CurrentProfileChanged, this, &QmlBackend::profileChanged);
     connect(settings, &Settings::ControllerMappingsUpdated, this, &QmlBackend::updateControllerMappings);
     settings_qml->setSettings(settings);
+    discord_presence->SetSettings(settings);
     discovery_manager.SetSettings(settings);
     window->setSettings(settings);
     setDiscoveryEnabled(true);
@@ -945,6 +950,7 @@ void QmlBackend::startSession(bool emit_session_changed)
         }
         teardownSession();
         emit sessionChanged(nullptr);
+        discord_presence->SessionEnded();
         emit error(tr("Stream failed"), tr("Failed to start Stream Session: %1").arg(e.what()));
         return;
     }
@@ -970,6 +976,7 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
     }
 
     session_info = connect_info;
+    discord_presence->SessionCreated(connect_info);
     window->setStreamMaxFPS(connect_info.video_profile.max_fps);
     disable_zero_copy = !settings->GetUseZeroCopy();
     {
@@ -1184,6 +1191,7 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
         teardownSession();
         emit sessionChanged(session);
 
+        discord_presence->SessionEnded();
         sleep_inhibit->release();
         setDiscoveryEnabled(true);
 #ifdef Q_OS_WINDOWS
@@ -1219,8 +1227,10 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
         if (session != session_for_connections)
             return;
 
-        if (session_for_connections->IsConnected())
+        if (session_for_connections->IsConnected()) {
             setDiscoveryEnabled(false);
+            discord_presence->SessionConnected();
+        }
     });
     chiaki_log_mutex.lock();
     chiaki_log_ctx = session->GetChiakiLog();
@@ -2368,6 +2378,22 @@ void QmlBackend::updateDiscoveryHosts()
             connectToHost(i, discovery_manager.GetHosts().at(i).host_name);
             break;
         }
+    }
+    {
+        // Let Discord Rich Presence know what is around (and pre-fetch cover art
+        // for whatever a registered console is already running)
+        const auto hosts = discovery_manager.GetHosts();
+        const DiscoveryHost *featured = nullptr;
+        for (const auto &host : hosts) {
+            if (!settings->GetRegisteredHostRegistered(host.GetHostMAC()))
+                continue;
+            if (!featured || (!host.running_app_titleid.isEmpty() && featured->running_app_titleid.isEmpty()))
+                featured = &host;
+        }
+        if (featured)
+            discord_presence->SetIdleHosts(hosts.count(), featured->host_name, featured->ps5, featured->running_app_name, featured->running_app_titleid);
+        else
+            discord_presence->SetIdleHosts(hosts.count(), QString(), true, QString(), QString());
     }
     emit hostsChanged();
 }

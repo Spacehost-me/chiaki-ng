@@ -94,6 +94,21 @@ class QmlSettings : public QObject
     Q_PROPERTY(uint streamMenuShortcut2 READ streamMenuShortcut2 WRITE setStreamMenuShortcut2 NOTIFY streamMenuShortcut2Changed)
     Q_PROPERTY(uint streamMenuShortcut3 READ streamMenuShortcut3 WRITE setStreamMenuShortcut3 NOTIFY streamMenuShortcut3Changed)
     Q_PROPERTY(uint streamMenuShortcut4 READ streamMenuShortcut4 WRITE setStreamMenuShortcut4 NOTIFY streamMenuShortcut4Changed)
+    Q_PROPERTY(bool discordPresenceEnabled READ discordPresenceEnabled WRITE setDiscordPresenceEnabled NOTIFY discordSettingsChanged)
+    Q_PROPERTY(QString discordClientId READ discordClientId WRITE setDiscordClientId NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowIdle READ discordShowIdle WRITE setDiscordShowIdle NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowGame READ discordShowGame WRITE setDiscordShowGame NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowCoverArt READ discordShowCoverArt WRITE setDiscordShowCoverArt NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordGameAsActivityName READ discordGameAsActivityName WRITE setDiscordGameAsActivityName NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowConsoleName READ discordShowConsoleName WRITE setDiscordShowConsoleName NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowStreamInfo READ discordShowStreamInfo WRITE setDiscordShowStreamInfo NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowElapsedTime READ discordShowElapsedTime WRITE setDiscordShowElapsedTime NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowPlaytime READ discordShowPlaytime WRITE setDiscordShowPlaytime NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowConsoleStats READ discordShowConsoleStats WRITE setDiscordShowConsoleStats NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordShowButtons READ discordShowButtons WRITE setDiscordShowButtons NOTIFY discordSettingsChanged)
+    Q_PROPERTY(bool discordProsperoMgrEnabled READ discordProsperoMgrEnabled WRITE setDiscordProsperoMgrEnabled NOTIFY discordSettingsChanged)
+    Q_PROPERTY(QString discordProsperoMgrUrl READ discordProsperoMgrUrl WRITE setDiscordProsperoMgrUrl NOTIFY discordSettingsChanged)
+    Q_PROPERTY(uint discordProsperoMgrPollInterval READ discordProsperoMgrPollInterval WRITE setDiscordProsperoMgrPollInterval NOTIFY discordSettingsChanged)
     Q_PROPERTY(int placeboUpscaler READ placeboUpscaler WRITE setPlaceboUpscaler NOTIFY placeboUpscalerChanged)
     Q_PROPERTY(int placeboPlaneUpscaler READ placeboPlaneUpscaler WRITE setPlaceboPlaneUpscaler NOTIFY placeboPlaneUpscalerChanged)
 	Q_PROPERTY(int placeboDownscaler READ placeboDownscaler WRITE setPlaceboDownscaler NOTIFY placeboDownscalerChanged)
@@ -583,6 +598,51 @@ public:
     uint streamMenuShortcut4() const;
     void setStreamMenuShortcut4(uint button);
 
+    bool discordPresenceEnabled() const;
+    void setDiscordPresenceEnabled(bool enabled);
+
+    QString discordClientId() const;
+    void setDiscordClientId(const QString &client_id);
+
+    bool discordShowIdle() const;
+    void setDiscordShowIdle(bool enabled);
+
+    bool discordShowGame() const;
+    void setDiscordShowGame(bool enabled);
+
+    bool discordShowCoverArt() const;
+    void setDiscordShowCoverArt(bool enabled);
+
+    bool discordGameAsActivityName() const;
+    void setDiscordGameAsActivityName(bool enabled);
+
+    bool discordShowConsoleName() const;
+    void setDiscordShowConsoleName(bool enabled);
+
+    bool discordShowStreamInfo() const;
+    void setDiscordShowStreamInfo(bool enabled);
+
+    bool discordShowElapsedTime() const;
+    void setDiscordShowElapsedTime(bool enabled);
+
+    bool discordShowPlaytime() const;
+    void setDiscordShowPlaytime(bool enabled);
+
+    bool discordShowConsoleStats() const;
+    void setDiscordShowConsoleStats(bool enabled);
+
+    bool discordShowButtons() const;
+    void setDiscordShowButtons(bool enabled);
+
+    bool discordProsperoMgrEnabled() const;
+    void setDiscordProsperoMgrEnabled(bool enabled);
+
+    QString discordProsperoMgrUrl() const;
+    void setDiscordProsperoMgrUrl(const QString &url);
+
+    uint discordProsperoMgrPollInterval() const;
+    void setDiscordProsperoMgrPollInterval(uint seconds);
+
     QString currentProfile() const;
     void setCurrentProfile(const QString &profile);
 
@@ -693,6 +753,7 @@ signals:
     void streamMenuShortcut2Changed();
     void streamMenuShortcut3Changed();
     void streamMenuShortcut4Changed();
+    void discordSettingsChanged();
     void controllerMappingChanged();
     void packetLossReportedMaxChanged();
     void iDROnFECFailureEnabledChanged();

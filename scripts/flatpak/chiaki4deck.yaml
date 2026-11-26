@@ -26,6 +26,10 @@ finish-args:
   - --system-talk-name=org.freedesktop.login1
   - --filesystem=xdg-run/pipewire-0
   - --filesystem=xdg-run/gamescope-0
+  # Discord Rich Presence (native, Flatpak and Snap Discord)
+  - --filesystem=xdg-run/discord-ipc-0
+  - --filesystem=xdg-run/app/com.discordapp.Discord:create
+  - --filesystem=xdg-run/app/com.discordapp.DiscordCanary:create
   - --filesystem=host-os:ro
   - --filesystem=xdg-download
   - --filesystem=xdg-documents

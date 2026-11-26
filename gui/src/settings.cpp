@@ -1083,6 +1083,161 @@ void Settings::SetStreamMenuShortcut4(uint button) {
 	settings.setValue("settings/stream_menu_shortcut4", button);
 }
 
+#ifndef CHIAKI_DISCORD_CLIENT_ID
+#define CHIAKI_DISCORD_CLIENT_ID ""
+#endif
+
+bool Settings::GetDiscordPresenceEnabled() const
+{
+	return settings.value("settings/discord_presence_enabled", false).toBool();
+}
+
+void Settings::SetDiscordPresenceEnabled(bool enabled)
+{
+	settings.setValue("settings/discord_presence_enabled", enabled);
+}
+
+QString Settings::GetDiscordClientId() const
+{
+	return settings.value("settings/discord_client_id", QString(CHIAKI_DISCORD_CLIENT_ID)).toString().trimmed();
+}
+
+void Settings::SetDiscordClientId(const QString &client_id)
+{
+	settings.setValue("settings/discord_client_id", client_id.trimmed());
+}
+
+bool Settings::GetDiscordShowIdle() const
+{
+	return settings.value("settings/discord_show_idle", true).toBool();
+}
+
+void Settings::SetDiscordShowIdle(bool enabled)
+{
+	settings.setValue("settings/discord_show_idle", enabled);
+}
+
+bool Settings::GetDiscordShowGame() const
+{
+	return settings.value("settings/discord_show_game", true).toBool();
+}
+
+void Settings::SetDiscordShowGame(bool enabled)
+{
+	settings.setValue("settings/discord_show_game", enabled);
+}
+
+bool Settings::GetDiscordShowCoverArt() const
+{
+	return settings.value("settings/discord_show_cover_art", true).toBool();
+}
+
+void Settings::SetDiscordShowCoverArt(bool enabled)
+{
+	settings.setValue("settings/discord_show_cover_art", enabled);
+}
+
+bool Settings::GetDiscordGameAsActivityName() const
+{
+	return settings.value("settings/discord_game_as_activity_name", true).toBool();
+}
+
+void Settings::SetDiscordGameAsActivityName(bool enabled)
+{
+	settings.setValue("settings/discord_game_as_activity_name", enabled);
+}
+
+bool Settings::GetDiscordShowConsoleName() const
+{
+	return settings.value("settings/discord_show_console_name", true).toBool();
+}
+
+void Settings::SetDiscordShowConsoleName(bool enabled)
+{
+	settings.setValue("settings/discord_show_console_name", enabled);
+}
+
+bool Settings::GetDiscordShowStreamInfo() const
+{
+	return settings.value("settings/discord_show_stream_info", true).toBool();
+}
+
+void Settings::SetDiscordShowStreamInfo(bool enabled)
+{
+	settings.setValue("settings/discord_show_stream_info", enabled);
+}
+
+bool Settings::GetDiscordShowElapsedTime() const
+{
+	return settings.value("settings/discord_show_elapsed_time", true).toBool();
+}
+
+void Settings::SetDiscordShowElapsedTime(bool enabled)
+{
+	settings.setValue("settings/discord_show_elapsed_time", enabled);
+}
+
+bool Settings::GetDiscordShowPlaytime() const
+{
+	return settings.value("settings/discord_show_playtime", true).toBool();
+}
+
+void Settings::SetDiscordShowPlaytime(bool enabled)
+{
+	settings.setValue("settings/discord_show_playtime", enabled);
+}
+
+bool Settings::GetDiscordShowConsoleStats() const
+{
+	return settings.value("settings/discord_show_console_stats", false).toBool();
+}
+
+void Settings::SetDiscordShowConsoleStats(bool enabled)
+{
+	settings.setValue("settings/discord_show_console_stats", enabled);
+}
+
+bool Settings::GetDiscordShowButtons() const
+{
+	return settings.value("settings/discord_show_buttons", true).toBool();
+}
+
+void Settings::SetDiscordShowButtons(bool enabled)
+{
+	settings.setValue("settings/discord_show_buttons", enabled);
+}
+
+bool Settings::GetDiscordProsperoMgrEnabled() const
+{
+	return settings.value("settings/discord_prospero_mgr_enabled", false).toBool();
+}
+
+void Settings::SetDiscordProsperoMgrEnabled(bool enabled)
+{
+	settings.setValue("settings/discord_prospero_mgr_enabled", enabled);
+}
+
+QString Settings::GetDiscordProsperoMgrUrl() const
+{
+	return settings.value("settings/discord_prospero_mgr_url").toString().trimmed();
+}
+
+void Settings::SetDiscordProsperoMgrUrl(const QString &url)
+{
+	settings.setValue("settings/discord_prospero_mgr_url", url.trimmed());
+}
+
+uint Settings::GetDiscordProsperoMgrPollInterval() const
+{
+	uint seconds = settings.value("settings/discord_prospero_mgr_poll_interval", 10).toUInt();
+	return seconds < 3 ? 3 : (seconds > 120 ? 120 : seconds);
+}
+
+void Settings::SetDiscordProsperoMgrPollInterval(uint seconds)
+{
+	settings.setValue("settings/discord_prospero_mgr_poll_interval", seconds);
+}
+
 QString Settings::GetPsnAccountId() const
 {
 	return settings.value("settings/psn_account_id").toString();
