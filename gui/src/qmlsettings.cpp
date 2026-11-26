@@ -977,14 +977,14 @@ void QmlSettings::setDiscordProsperoMgrPollInterval(uint seconds)
     emit discordSettingsChanged();
 }
 
-QString QmlSettings::discordImgurClientId() const
+QString QmlSettings::discordCoverUploadUrl() const
 {
-    return settings->GetDiscordImgurClientId();
+    return settings->GetDiscordCoverUploadUrl();
 }
 
-void QmlSettings::setDiscordImgurClientId(const QString &client_id)
+void QmlSettings::setDiscordCoverUploadUrl(const QString &url)
 {
-    settings->SetDiscordImgurClientId(client_id);
+    settings->SetDiscordCoverUploadUrl(url);
     emit discordSettingsChanged();
 }
 

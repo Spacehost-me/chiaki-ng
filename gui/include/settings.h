@@ -524,8 +524,8 @@ class Settings : public QObject
 		bool GetDiscordCoverUploadEnabled() const;
 		void SetDiscordCoverUploadEnabled(bool enabled);
 
-		QString GetDiscordImgurClientId() const;
-		void SetDiscordImgurClientId(const QString &client_id);
+		QString GetDiscordCoverUploadUrl() const;
+		void SetDiscordCoverUploadUrl(const QString &url);
 
 		void DeleteProfile(QString profile);
 

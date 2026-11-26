@@ -110,7 +110,7 @@ class QmlSettings : public QObject
     Q_PROPERTY(QString discordProsperoMgrUrl READ discordProsperoMgrUrl WRITE setDiscordProsperoMgrUrl NOTIFY discordSettingsChanged)
     Q_PROPERTY(uint discordProsperoMgrPollInterval READ discordProsperoMgrPollInterval WRITE setDiscordProsperoMgrPollInterval NOTIFY discordSettingsChanged)
     Q_PROPERTY(bool discordCoverUploadEnabled READ discordCoverUploadEnabled WRITE setDiscordCoverUploadEnabled NOTIFY discordSettingsChanged)
-    Q_PROPERTY(QString discordImgurClientId READ discordImgurClientId WRITE setDiscordImgurClientId NOTIFY discordSettingsChanged)
+    Q_PROPERTY(QString discordCoverUploadUrl READ discordCoverUploadUrl WRITE setDiscordCoverUploadUrl NOTIFY discordSettingsChanged)
     Q_PROPERTY(int placeboUpscaler READ placeboUpscaler WRITE setPlaceboUpscaler NOTIFY placeboUpscalerChanged)
     Q_PROPERTY(int placeboPlaneUpscaler READ placeboPlaneUpscaler WRITE setPlaceboPlaneUpscaler NOTIFY placeboPlaneUpscalerChanged)
 	Q_PROPERTY(int placeboDownscaler READ placeboDownscaler WRITE setPlaceboDownscaler NOTIFY placeboDownscalerChanged)
@@ -648,8 +648,8 @@ public:
     bool discordCoverUploadEnabled() const;
     void setDiscordCoverUploadEnabled(bool enabled);
 
-    QString discordImgurClientId() const;
-    void setDiscordImgurClientId(const QString &client_id);
+    QString discordCoverUploadUrl() const;
+    void setDiscordCoverUploadUrl(const QString &url);
 
     QString currentProfile() const;
     void setCurrentProfile(const QString &profile);

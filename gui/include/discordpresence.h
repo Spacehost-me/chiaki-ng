@@ -127,11 +127,11 @@ class DiscordGameInfoResolver : public QObject
 
 		/**
 		 * Last resort for titles no public database knows (unreleased, homebrew,
-		 * regional): grab the icon off the console and mirror it to Imgur, since
-		 * Discord's image proxy cannot reach a console on the local network.
-		 * Opt-in; without it such titles keep the chiaki-ng logo.
+		 * regional): grab the icon off the console and mirror it to a public
+		 * host, since Discord's image proxy cannot reach a console on the local
+		 * network. Opt-in; without it such titles keep the chiaki-ng logo.
 		 */
-		void SetCoverUpload(bool enabled, const QString &client_id);
+		void SetCoverUpload(bool enabled, const QString &upload_url);
 		void SetConsoleIconSource(const QString &base_url);
 
 	signals:
@@ -141,7 +141,7 @@ class DiscordGameInfoResolver : public QObject
 		void ResolveFromPatchesDb(const QString &title_id);
 		void ResolveFromTmdb(const QString &title_id);
 		void ResolveFromConsole(const QString &title_id);
-		void UploadCover(const QString &title_id, const QByteArray &image);
+		void UploadCover(const QString &title_id, const QByteArray &image, const QString &content_type);
 		void Finish(const QString &title_id, const DiscordGameInfo &info);
 		void LoadCache();
 		void SaveCache();
@@ -151,7 +151,7 @@ class DiscordGameInfoResolver : public QObject
 		QHash<QString, DiscordGameInfo> cache;
 		QHash<QString, QDateTime> in_flight;
 		QString console_icon_base;
-		QString imgur_client_id;
+		QString cover_upload_url;
 		bool upload_enabled = false;
 };
 

@@ -3609,7 +3609,7 @@ DialogView {
 
                             C.CheckBox {
                                 id: discordCoverUploadCheckbox
-                                text: qsTr("Upload the console's icon to Imgur when no cover art is found")
+                                text: qsTr("Upload the console's icon when no cover art is found")
                                 enabled: Chiaki.settings.discordProsperoMgrEnabled
                                 checked: Chiaki.settings.discordCoverUploadEnabled
                                 onToggled: Chiaki.settings.discordCoverUploadEnabled = checked
@@ -3628,22 +3628,22 @@ DialogView {
                                 horizontalAlignment: Text.AlignHCenter
                                 font.pixelSize: 12
                                 opacity: 0.7
-                                text: qsTr("Discord loads cover art from the internet, so it cannot read an icon straight off your console. Public title databases cover released games; for anything they do not list (unreleased, homebrew, regional) this uploads the console's icon to Imgur as a publicly reachable image and hands Discord that link. Each title is uploaded once and then cached. Leave it off to keep showing the chiaki-ng logo instead.")
+                                text: qsTr("Discord loads cover art from the internet, so it cannot read an icon straight off your console. Public title databases cover released games; for anything they do not list (unreleased, homebrew, regional) this uploads the console's icon to the host below and hands Discord that link. Each title is uploaded once and then cached. Leave it off to keep showing the chiaki-ng logo instead. Note that anyone with the link can view an uploaded image.")
                             }
 
                             Label {
                                 Layout.alignment: Qt.AlignRight
-                                text: qsTr("Imgur Client ID:")
+                                text: qsTr("Upload URL:")
                             }
 
                             C.TextField {
-                                id: discordImgurClientId
+                                id: discordCoverUploadUrl
                                 Layout.preferredWidth: 400
                                 enabled: Chiaki.settings.discordProsperoMgrEnabled && Chiaki.settings.discordCoverUploadEnabled
-                                text: Chiaki.settings.discordImgurClientId
-                                placeholderText: qsTr("Required, register an application at api.imgur.com")
+                                text: Chiaki.settings.discordCoverUploadUrl
+                                placeholderText: qsTr("https://up.spacehost.ovh/upload")
                                 lastInFocusChain: true
-                                onEditingFinished: Chiaki.settings.discordImgurClientId = text
+                                onEditingFinished: Chiaki.settings.discordCoverUploadUrl = text
                             }
 
                             Label {

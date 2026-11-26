@@ -1087,8 +1087,10 @@ void Settings::SetStreamMenuShortcut4(uint button) {
 #define CHIAKI_DISCORD_CLIENT_ID ""
 #endif
 
-#ifndef CHIAKI_IMGUR_CLIENT_ID
-#define CHIAKI_IMGUR_CLIENT_ID ""
+// Takes the raw image as the request body plus an X-File-Name header, and
+// answers with {"url": ..., "delete_url": ...} or {"error": ...}.
+#ifndef CHIAKI_COVER_UPLOAD_URL
+#define CHIAKI_COVER_UPLOAD_URL "https://up.spacehost.ovh/upload"
 #endif
 
 bool Settings::GetDiscordPresenceEnabled() const
@@ -1252,14 +1254,14 @@ void Settings::SetDiscordCoverUploadEnabled(bool enabled)
 	settings.setValue("settings/discord_cover_upload_enabled", enabled);
 }
 
-QString Settings::GetDiscordImgurClientId() const
+QString Settings::GetDiscordCoverUploadUrl() const
 {
-	return settings.value("settings/discord_imgur_client_id", QString(CHIAKI_IMGUR_CLIENT_ID)).toString().trimmed();
+	return settings.value("settings/discord_cover_upload_url", QString(CHIAKI_COVER_UPLOAD_URL)).toString().trimmed();
 }
 
-void Settings::SetDiscordImgurClientId(const QString &client_id)
+void Settings::SetDiscordCoverUploadUrl(const QString &url)
 {
-	settings.setValue("settings/discord_imgur_client_id", client_id.trimmed());
+	settings.setValue("settings/discord_cover_upload_url", url.trimmed());
 }
 
 QString Settings::GetPsnAccountId() const

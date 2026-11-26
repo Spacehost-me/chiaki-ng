@@ -557,10 +557,10 @@ void DiscordGameInfoResolver::ResolveFromTmdb(const QString &title_id)
 	});
 }
 
-void DiscordGameInfoResolver::SetCoverUpload(bool enabled, const QString &client_id)
+void DiscordGameInfoResolver::SetCoverUpload(bool enabled, const QString &upload_url)
 {
 	upload_enabled = enabled;
-	imgur_client_id = client_id.trimmed();
+	cover_upload_url = upload_url.trimmed();
 }
 
 void DiscordGameInfoResolver::SetConsoleIconSource(const QString &base_url)
@@ -573,7 +573,7 @@ void DiscordGameInfoResolver::SetConsoleIconSource(const QString &base_url)
 
 void DiscordGameInfoResolver::ResolveFromConsole(const QString &title_id)
 {
-	if(!upload_enabled || console_icon_base.isEmpty() || imgur_client_id.isEmpty())
+	if(!upload_enabled || console_icon_base.isEmpty() || cover_upload_url.isEmpty())
 	{
 		Finish(title_id, DiscordGameInfo());
 		return;
@@ -598,40 +598,43 @@ void DiscordGameInfoResolver::ResolveFromConsole(const QString &title_id)
 			Finish(title_id, DiscordGameInfo());
 			return;
 		}
-		UploadCover(title_id, image);
+		QString content_type = reply->header(QNetworkRequest::ContentTypeHeader).toString().section(QLatin1Char(';'), 0, 0).trimmed();
+		if(!content_type.startsWith(QLatin1String("image/")))
+			content_type = QStringLiteral("image/png");
+		UploadCover(title_id, image, content_type);
 	});
 }
 
-void DiscordGameInfoResolver::UploadCover(const QString &title_id, const QByteArray &image)
+// The host takes the raw image as the body plus an X-File-Name header, and
+// answers with {"url": ..., "delete_url": ...} or {"error": ...}. The file name
+// carries the extension the host serves the image back with, so it is derived
+// from what the console actually sent rather than assumed to be PNG.
+void DiscordGameInfoResolver::UploadCover(const QString &title_id, const QByteArray &image, const QString &content_type)
 {
 	in_flight.insert(title_id, QDateTime::currentDateTimeUtc());
-	QNetworkRequest request(QUrl(QStringLiteral("https://api.imgur.com/3/image")));
-	request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/x-www-form-urlencoded"));
-	request.setRawHeader("Authorization", QStringLiteral("Client-ID %1").arg(imgur_client_id).toUtf8());
+	const QString extension = content_type.section(QLatin1Char('/'), 1, 1).toLower().replace(QLatin1String("jpeg"), QLatin1String("jpg"));
+	QNetworkRequest request{QUrl(cover_upload_url)};
+	request.setHeader(QNetworkRequest::ContentTypeHeader, content_type);
+	request.setRawHeader("X-File-Name", QStringLiteral("%1.%2").arg(title_id, extension).toUtf8());
 	request.setTransferTimeout(30000);
-	QUrlQuery form;
-	form.addQueryItem(QStringLiteral("type"), QStringLiteral("base64"));
-	form.addQueryItem(QStringLiteral("image"), QString::fromLatin1(image.toBase64()));
-	QNetworkReply *reply = nam->post(request, form.toString(QUrl::FullyEncoded).toUtf8());
+	QNetworkReply *reply = nam->post(request, image);
 	connect(reply, &QNetworkReply::finished, this, [this, reply, title_id]() {
 		reply->deleteLater();
 		DiscordGameInfo info;
 		info.title_id = title_id;
-		if(reply->error() == QNetworkReply::NoError)
+		const QJsonObject root = QJsonDocument::fromJson(reply->readAll()).object();
+		const QString error = root.value(QStringLiteral("error")).toString().trimmed();
+		if(reply->error() == QNetworkReply::NoError && error.isEmpty())
 		{
-			const QJsonObject root = QJsonDocument::fromJson(reply->readAll()).object();
-			if(root.value(QStringLiteral("success")).toBool())
-			{
-				info.icon_url = root.value(QStringLiteral("data")).toObject().value(QStringLiteral("link")).toString().trimmed();
-				// Discord's image proxy only fetches https URLs
-				if(info.icon_url.startsWith(QLatin1String("http://")))
-					info.icon_url.replace(0, 7, QLatin1String("https://"));
-				// The name still comes from the console, this only supplies art
-				info.valid = !info.icon_url.isEmpty();
-			}
+			info.icon_url = root.value(QStringLiteral("url")).toString().trimmed();
+			// Discord's image proxy only fetches https URLs
+			if(info.icon_url.startsWith(QLatin1String("http://")))
+				info.icon_url.replace(0, 7, QLatin1String("https://"));
+			// The name still comes from the console, this only supplies art
+			info.valid = !info.icon_url.isEmpty();
 		}
 		if(!info.valid)
-			qCInfo(chiakiGui) << "Discord: cover upload failed for" << title_id << reply->errorString();
+			qCInfo(chiakiGui) << "Discord: cover upload failed for" << title_id << (error.isEmpty() ? reply->errorString() : error);
 		else
 			qCInfo(chiakiGui) << "Discord: uploaded cover for" << title_id;
 		Finish(title_id, info);
@@ -1476,7 +1479,7 @@ void DiscordPresence::ProsperoMgrReachabilityChanged(bool, const QString &)
 
 void DiscordPresence::UpdateCoverSources()
 {
-	resolver->SetCoverUpload(settings->GetDiscordCoverUploadEnabled(), settings->GetDiscordImgurClientId());
+	resolver->SetCoverUpload(settings->GetDiscordCoverUploadEnabled(), settings->GetDiscordCoverUploadUrl());
 	resolver->SetConsoleIconSource(ProsperoMgrEnabled() ? ProsperoMgrUrl() : QString());
 }
 
